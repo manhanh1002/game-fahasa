@@ -29,6 +29,12 @@ if (!NOCODB_TOKEN) {
 app.get('/api/check', async (req, res) => {
     const { code } = req.query;
     if (!code) return res.status(400).json({ error: 'Missing random_code' });
+    
+    // Sanitize code to prevent injection (Alphanumeric only)
+    if (!/^[a-zA-Z0-9]+$/.test(code)) {
+        return res.status(400).json({ error: 'Invalid code format' });
+    }
+
     if (!NOCODB_TOKEN) return res.status(500).json({ error: 'Server misconfiguration: Missing Token' });
 
     try {
@@ -153,6 +159,11 @@ app.post('/api/update', async (req, res) => {
 
     if (!code) {
         return res.status(400).json({ error: 'Missing code' });
+    }
+
+    // Sanitize code to prevent injection
+    if (!/^[a-zA-Z0-9]+$/.test(code)) {
+        return res.status(400).json({ error: 'Invalid code format' });
     }
 
     const targetStatus = status || 'PLAYER';

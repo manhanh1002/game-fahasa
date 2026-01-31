@@ -33,19 +33,18 @@ async function checkGameCondition() {
         const data = await response.json();
         if (data.valid) {
             if (data.status === 'INVITED') {
+                // Show Start Button (was hidden by default)
+                const btnStart = document.querySelector('.btn-primary');
+                if (btnStart) btnStart.style.display = 'block';
                 return true; // Allowed to play
             } else if (data.status === 'PLAYER') {
-                // Change Start Button to Review Prize Button - NO, User wants "Start" button to trigger notice first.
-                // We keep button as is ( Start Icon ) so they can click it.
-                // Only AFTER they click and see popup -> "Understood" -> Then show "Out of Turns" and maybe "Review"?
-
-                // But we DO need to store the prize.
-                // Store prize ID for startProgram to handle
-                // currentUserPrize = data.prize_id || data.prize; // CHANGE: Don't set this yet.
-                pendingPlayerPrize = data.prize_id || data.prize;
-
-                // Return special status to handle later
-                return 'PLAYER_NOTICE_PENDING';
+                // Change Start Button to Review Prize Button IMMEDIATELY to prevent replay
+                currentUserPrize = data.prize_id || data.prize;
+                updateUIForReviewMode();
+                // Ensure it is visible (updateUIForReviewMode doesn't force display:block if it was none)
+                const btnStart = document.querySelector('.btn-primary');
+                if (btnStart) btnStart.style.display = 'block';
+                return 'PLAYER';
             } else if (data.status === 'EXPIRED') {
                 // Show Expired Popup
                 const expiredPopup = document.getElementById('popup-expired');
@@ -55,6 +54,8 @@ async function checkGameCondition() {
                 return false;
             } else if (data.status === 'OPENNING') { // Handle OPENNING status
                 // Allow user to continue even if on a different browser/device
+                const btnStart = document.querySelector('.btn-primary');
+                if (btnStart) btnStart.style.display = 'block';
                 return true;
             } else {
                 alert(`Trạng thái không hợp lệ: ${data.status}`);
@@ -310,16 +311,14 @@ async function startProgram() {
                  currentUserPrize = result.prize_id || result.prize;
                  // Reset processing
                  isProcessing = false;
-                 if (btnStart) {
-                     btnStart.style.opacity = '1';
-                     btnStart.style.pointerEvents = 'auto';
-                     // Switch to Review Button style if needed?
-                     const btnImg = btnStart.querySelector('img');
-                     if (btnImg) {
-                        btnImg.src = 'assets/btn-review.png';
-                        btnImg.alt = 'Xem lại quà';
-                     }
-                 }
+                 
+                 // Update UI to Review Mode
+                 updateUIForReviewMode();
+
+                 // Optionally show the review popup immediately?
+                 // User said "change automatically to 'Xem lại quà'", which implies the button state.
+                 // But they might also expect the popup.
+                 // Current code was showing review popup. I will keep it.
                  showReviewPopup(currentUserPrize);
                  return;
             }
@@ -399,32 +398,19 @@ window.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    setTimeout(() => {
-        // Remove automatic welcome-popup check.
-        // The user says "Khi click vào button Bắt đầu ngay... mới hiển thị popup..."
-        // So we should NOT show it automatically after 2s if the user wants this flow.
-        // OR the user meant "If status is PLAYER, don't show notice... wait for click".
-        // But for normal users (INVITED), do we show it?
-
-        // Let's assume we keep the welcome popup for regular flow maybe?
-        // But the user's request seems specific to the PLAYER flow interaction.
-        // "Khi trạng thái là PLAYER thì sẽ không hiển thị popup-notice luôn" -> "popup-notice" here likely refers to the "Lưu ý" popup (id='welcome-popup' uses 'popup-notice.png').
-
-        // So: If PLAYER, don't auto show. If INVITED, auto show?
-        // Let's check condition first.
-
-        checkGameCondition().then(status => {
-            // If status is true (INVITED), show welcome popup?
-            if (status === true) {
+    // Check condition IMMEDIATELY to update UI (Start vs Review)
+    checkGameCondition().then(status => {
+        // If status is true (INVITED), show welcome popup after delay
+        if (status === true) {
+            setTimeout(() => {
                 const popup = document.getElementById('welcome-popup');
                 if (popup) popup.style.display = 'flex';
-            } else if (status === 'OPENNING') {
-                showOpeningPopup();
-            }
-            // If status is 'PLAYER_NOTICE_PENDING', do NOT show popup yet.
-        });
-
-    }, 2000);
+            }, 2000);
+        } else if (status === 'OPENNING') {
+            showOpeningPopup();
+        }
+        // If status is 'PLAYER', UI is already updated by checkGameCondition
+    });
 });
 
 const prizes = {
@@ -652,6 +638,20 @@ function closeResultPopup() {
     }
 }
 
+function updateUIForReviewMode() {
+    const btnStart = document.querySelector('.btn-primary');
+    if (btnStart) {
+        const btnImg = btnStart.querySelector('img');
+        if (btnImg) {
+            btnImg.src = 'assets/btn-review.png';
+            btnImg.alt = 'Xem lại quà';
+        }
+        btnStart.style.display = 'block'; // Ensure it's visible
+        btnStart.style.opacity = '1';
+        btnStart.style.pointerEvents = 'auto';
+    }
+}
+
 function goHome() {
     closeResultPopup();
     const homePage = document.getElementById('home-page');
@@ -664,18 +664,7 @@ function goHome() {
 
     // If we have a prize, update the home screen button to "Review Mode"
     if (currentUserPrize) {
-        const btnStart = document.querySelector('.btn-primary');
-        if (btnStart) {
-            const btnImg = btnStart.querySelector('img');
-            if (btnImg) {
-                btnImg.src = 'assets/btn-review.png';
-                btnImg.alt = 'Xem lại quà';
-            }
-            // Logic is already handled by startProgram checking currentUserPrize
-            // Just need to ensure visuals are updated
-            btnStart.style.opacity = '1';
-            btnStart.style.pointerEvents = 'auto';
-        }
+        updateUIForReviewMode();
     }
 }
 function closePopup() {
