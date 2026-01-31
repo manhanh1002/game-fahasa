@@ -4,7 +4,7 @@
   "description": "Backend for Fahasa Game Condition Check",
   "main": "api/index.js",
   "scripts": {
-    "start": "node api/index.js",
+    "start": "node api/index.js"
   },
   "dependencies": {
     "axios": "^1.6.2",
