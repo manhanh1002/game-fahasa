@@ -315,11 +315,8 @@ async function startProgram() {
                  // Update UI to Review Mode
                  updateUIForReviewMode();
 
-                 // Optionally show the review popup immediately?
-                 // User said "change automatically to 'Xem lại quà'", which implies the button state.
-                 // But they might also expect the popup.
-                 // Current code was showing review popup. I will keep it.
-                 showReviewPopup(currentUserPrize);
+                 // Show "Out of turn" popup as requested
+                 showOpeningPopup();
                  return;
             }
 
