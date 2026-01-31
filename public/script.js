@@ -491,7 +491,7 @@ async function updateGameStatus(prizeName, prizeId, statusParam) {
         return data; // Return full data (including prize info if PLAYER)
     } catch (error) {
         console.error("Failed to update status:", error);
-        return null;
+        return { success: false, error: error.message }; // Return object instead of null for better debugging
     }
 }
 

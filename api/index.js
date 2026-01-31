@@ -181,8 +181,13 @@ app.post('/api/update', async (req, res) => {
                 return res.status(409).json(response);
             }
             // Just update status to OPENNING
-            await axios.patch(NOCODB_API_URL, { Id: record.Id, status: 'OPENNING' }, { headers: { 'xc-token': NOCODB_TOKEN } });
-            return res.json({ success: true, status: 'OPENNING' });
+            try {
+                await axios.patch(NOCODB_API_URL, { Id: record.Id, status: 'OPENNING' }, { headers: { 'xc-token': NOCODB_TOKEN } });
+                return res.json({ success: true, status: 'OPENNING' });
+            } catch (patchError) {
+                console.error("NocoDB Patch Error:", patchError.response?.data || patchError.message);
+                return res.status(500).json({ error: 'Database update failed' });
+            }
         }
 
         if (targetStatus === 'PLAYER') {
