@@ -400,12 +400,10 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Check condition IMMEDIATELY to update UI (Start vs Review)
     checkGameCondition().then(status => {
-        // If status is true (INVITED), show welcome popup after delay
+        // If status is true (INVITED), show welcome popup IMMEDIATELY
         if (status === true) {
-            setTimeout(() => {
-                const popup = document.getElementById('welcome-popup');
-                if (popup) popup.style.display = 'flex';
-            }, 2000);
+            const popup = document.getElementById('welcome-popup');
+            if (popup) popup.style.display = 'flex';
         } else if (status === 'OPENNING') {
             showOpeningPopup();
         }
@@ -559,7 +557,14 @@ async function showResult(envelopeId) {
     if (result && result.success && result.prize_id) {
         // Check if this is an existing prize (Concurrent tab access)
         if (result.is_existing) {
+            currentUserPrize = result.prize_id;
+            updateUIForReviewMode();
             showOpeningPopup();
+            
+            // Auto return to home (Review Mode) after short delay
+            setTimeout(() => {
+                goHome();
+            }, 2000);
             return;
         }
 
