@@ -411,18 +411,29 @@ app.post('/api/update', async (req, res) => {
                     }
                 } catch (verifyError) {
                     console.error("Verification failed:", verifyError);
-                    // CRITICAL SAFETY NET:
-                    // If verification logic itself fails (e.g. DB timeout when counting), 
-                    // we CANNOT be sure if we oversold.
-                    // But rolling back blindly is risky too.
-                    // Best approach for integrity: Log Critical Error and let the user keep the prize 
-                    // (Better to oversell 1 item than to frustrate user with a system error),
-                    // OR return Error 500 and let them retry (which checks DB again).
                     
-                    // Choosing: Log Warning, Assume Success (User Friendly)
-                    // But if Rollback action FAILED (inside the try block above), we catch it here.
-                    if (verifyError.message && verifyError.message.includes('Rollback')) {
-                         console.error("CRITICAL: ROLLBACK FAILED for user " + code);
+                    // CRITICAL FIX: FAIL SAFE
+                    // If verification fails (e.g. DB timeout), we CANNOT assume success.
+                    // We must attempt to VOID the prize to prevent overselling during outages.
+                    try {
+                        console.warn(`Attempting to VOID prize for ${code} due to Verification Failure...`);
+                        await axios.patch(
+                            NOCODB_API_URL,
+                            {
+                                Id: record.Id,
+                                status: 'OPENNING',
+                                prize: null,
+                                prize_id: null,
+                                note: 'Voided: Verification Failed (System Error)'
+                            },
+                            { headers: { 'xc-token': NOCODB_TOKEN } }
+                        );
+                        return { success: false, error: 'SYSTEM_BUSY' };
+                    } catch (voidErr) {
+                         console.error("CRITICAL: VOID FAILED for user " + code, voidErr.message);
+                         // If we can't even void, we are in trouble. 
+                         // But we should still return error to client so they don't think they won.
+                         return { success: false, error: 'SYSTEM_ERROR' };
                     }
                 }
                 
