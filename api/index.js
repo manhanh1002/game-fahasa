@@ -325,22 +325,59 @@ app.post('/api/update', async (req, res) => {
                     if (verifyLimit > 0) {
                         const verifyWhere = `(prize_id,eq,${winningPrizeId})`;
                         
+                        // CRITICAL FIX: Rank-based Verification
+                        // Instead of voiding everyone if Count > Limit, we sort winners by time and keep the first N.
+                        let winners = [];
                         let winnerCount = 0;
+                        
                         await retryOperation(async () => {
                             const verifyRes = await axios.get(NOCODB_API_URL, {
                                 headers: { 'xc-token': NOCODB_TOKEN },
                                 params: { 
                                     where: verifyWhere, 
-                                    limit: verifyLimit + 5, // Get a few more to see if we overflowed
-                                    sort: 'updated_at' // Sort by time (NocoDB usually supports 'created_at' or 'updated_at')
+                                    limit: verifyLimit + 10, // Fetch enough to find ourselves
+                                    sort: 'updated_at,Id' // Sort by Time ASC, then ID ASC (stable sort)
                                 },
                                 timeout: 5000
                             });
-                            winnerCount = verifyRes.data.pageInfo?.totalRows || verifyRes.data.list?.length || 0;
-                        }, 3, 500);
+                            winners = verifyRes.data.list || [];
+                            winnerCount = verifyRes.data.pageInfo?.totalRows || winners.length;
+                        }, 3, 300);
 
                         if (winnerCount > verifyLimit) {
-                            console.warn(`OVERSOLD DETECTED for ${winningPrizeId}. Limit: ${verifyLimit}, Actual: ${winnerCount}. Initiating Re-allocation for ${code}`);
+                            console.warn(`OVERSOLD DETECTED for ${winningPrizeId}. Limit: ${verifyLimit}, Actual: ${winnerCount}. Checking Rank...`);
+                            
+                            // Find my position in the list
+                            const myIndex = winners.findIndex(w => w.Id === record.Id);
+                            
+                            if (myIndex === -1) {
+                                // I am not even in the list? Something is wrong, or pagination missed me.
+                                // Safer to void to be conservative, or assume I am late.
+                                console.warn(`User ${code} not found in winner list (Top ${verifyLimit+10}). Voiding.`);
+                                // Proceed to Re-allocation/Void logic below
+                            } else if (myIndex < verifyLimit) {
+                                // I am within the limit! (Index 0 to limit-1)
+                                // I should STAY. Do NOT void.
+                                console.log(`User ${code} is Rank ${myIndex + 1}/${winnerCount}. Safe (Limit ${verifyLimit}). Keeping prize.`);
+                                // Update Cache and Return Success
+                                if (prizeCache.data) {
+                                    prizeCache.data[winningPrizeId] = (prizeCache.data[winningPrizeId] || 0) + 1;
+                                    prizeCache.lastFetch = Date.now();
+                                }
+                                return { 
+                                    success: true, 
+                                    data: {
+                                        status: 'PLAYER',
+                                        prize: winningPrizeName,
+                                        prize_id: winningPrizeId
+                                    }
+                                };
+                            } else {
+                                console.warn(`User ${code} is Rank ${myIndex + 1}/${winnerCount}. Late! (Limit ${verifyLimit}). Initiating Re-allocation.`);
+                                // Fall through to the existing Re-allocation logic
+                            }
+                            
+                            // Only proceed to re-allocation if we are the ones who need to leave
                             
                             // STRATEGY: Dynamic Re-allocation
                             // 1. Force Refresh Cache to get latest DB state
