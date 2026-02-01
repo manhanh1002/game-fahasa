@@ -47,27 +47,11 @@ app.get('/api/check', async (req, res) => {
         const record = response.data.list?.[0];
         if (!record) return res.json({ valid: false });
 
-        // Check Global Stock Availability
-        let isGlobalOutOfStock = false;
-        // Only check stock if user hasn't played yet
-        if (record.status === 'INVITED' || record.status === 'OPENNING') {
-            const currentCounts = await getPrizeCounts();
-            let totalRemaining = 0;
-            for (const [id, limit] of Object.entries(PRIZE_LIMITS)) {
-                const used = currentCounts[id] || 0;
-                totalRemaining += Math.max(0, limit - used);
-            }
-            if (totalRemaining <= 0) {
-                isGlobalOutOfStock = true;
-            }
-        }
-
         res.json({
             valid: true,
             status: record.status,
             prize: record.prize,
-            prize_id: record.prize_id,
-            isGlobalOutOfStock: isGlobalOutOfStock // Flag for Frontend
+            prize_id: record.prize_id // Return prize_id
         });
 
     } catch (err) {
