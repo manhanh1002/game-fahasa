@@ -299,7 +299,8 @@ app.post('/api/update', async (req, res) => {
                 
                 // 3. Verify Lock Ownership with Polling (Retry for Propagation Delay)
                 let lockAcquired = false;
-                for (let i = 0; i < 5; i++) { // Retry 5 times (approx 2.5s)
+                let lastNote = null;
+                for (let i = 0; i < 10; i++) { // Retry 10 times (approx 5s)
                     await new Promise(resolve => setTimeout(resolve, 500)); // Wait 500ms
                     
                     const verifyLockRes = await axios.get(NOCODB_API_URL, {
@@ -308,6 +309,8 @@ app.post('/api/update', async (req, res) => {
                     });
                     
                     const lockedRecord = verifyLockRes.data.list?.[0];
+                    lastNote = lockedRecord?.note;
+
                     if (lockedRecord && lockedRecord.note === lockId) {
                         lockAcquired = true;
                         break;
@@ -315,7 +318,7 @@ app.post('/api/update', async (req, res) => {
                     
                     if (lockedRecord && lockedRecord.note && lockedRecord.note.startsWith('LOCK-') && lockedRecord.note !== lockId) {
                         console.warn(`User ${code} LOST LOCK to ${lockedRecord.note}. Aborting.`);
-                        return res.status(429).json({ error: 'Request is being processed. Please wait. (Lost Lock)' });
+                        return res.status(429).json({ error: `Request is being processed. Please wait. (Lost Lock to ${lockedRecord.note})` });
                     }
                     
                     // If note is null or old value, it means DB hasn't updated yet. Continue waiting.
@@ -323,7 +326,7 @@ app.post('/api/update', async (req, res) => {
                 
                 if (!lockAcquired) {
                     console.warn(`User ${code} FAILED to verify lock after retries. Propagation too slow.`);
-                    return res.status(429).json({ error: 'Request is being processed. Please wait. (Lock Timeout)' });
+                    return res.status(429).json({ error: `Request is being processed. Please wait. (Lock Timeout. Last Note: ${lastNote})` });
                 }
 
             } catch (lockError) {
