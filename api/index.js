@@ -249,6 +249,11 @@ app.post('/api/update', async (req, res) => {
                 return res.status(409).json({ error: 'Check blocked', currentStatus: record.status });
             }
 
+            // ANTI-DDOS / CONCURRENCY MITIGATION
+            // Add a small random delay (100ms - 500ms) to desynchronize simultaneous requests
+            // This reduces the chance of 1000 requests hitting the DB check at the exact same millisecond
+            await new Promise(resolve => setTimeout(resolve, Math.floor(Math.random() * 400) + 100));
+
             // 3. LOTTERY LOGIC (Server Side) - WRAPPED IN GLOBAL MUTEX
             // Critical Section: Read Count -> Check Limit -> Update DB
             // Only ONE request can execute this block at a time.
@@ -280,13 +285,110 @@ app.post('/api/update', async (req, res) => {
                             Id: record.Id,
                             status: 'PLAYER',
                             prize: winningPrizeName,
-                            prize_id: winningPrizeId
+                            prize_id: winningPrizeId,
+                            // Add timestamp to help identify who came last (though NocoDB has UpdatedAt, explicit is safer)
+                            won_at: new Date().toISOString() 
                         },
                         { headers: { 'xc-token': NOCODB_TOKEN } }
                     );
                 } catch (dbError) {
                     console.error("DB Update Failed inside Lock:", dbError);
                     return { success: false, error: 'DB_ERROR' };
+                }
+
+                // 5. POST-COMMIT VERIFICATION (The "Safety Net" for Distributed Systems)
+                // Check if we oversold due to race conditions across multiple server instances
+                try {
+                    const verifyLimit = PRIZE_LIMITS[winningPrizeId];
+                    // Only check if limit is small/critical
+                    if (verifyLimit > 0) {
+                        const verifyWhere = `(prize_id,eq,${winningPrizeId})`;
+                        const verifyRes = await axios.get(NOCODB_API_URL, {
+                            headers: { 'xc-token': NOCODB_TOKEN },
+                            params: { 
+                                where: verifyWhere, 
+                                limit: verifyLimit + 5, // Get a few more to see if we overflowed
+                                sort: 'updated_at' // Sort by time (NocoDB usually supports 'created_at' or 'updated_at')
+                            }
+                        });
+                        
+                        const winners = verifyRes.data.list || [];
+                        const winnerCount = verifyRes.data.pageInfo?.totalRows || winners.length;
+
+                        if (winnerCount > verifyLimit) {
+                            console.warn(`OVERSOLD DETECTED for ${winningPrizeId}. Limit: ${verifyLimit}, Actual: ${winnerCount}. Initiating Re-allocation for ${code}`);
+                            
+                            // STRATEGY: Dynamic Re-allocation
+                            // 1. Force Refresh Cache to get latest DB state
+                            prizeCache.lastFetch = 0;
+                            const freshCounts = await getPrizeCounts();
+                            
+                            // 2. Check stock of OTHER prizes
+                            const fallbackPrizeId = pickRandomPrize(freshCounts);
+                            
+                            if (fallbackPrizeId) {
+                                const fallbackPrizeName = PRIZE_NAMES[fallbackPrizeId];
+                                console.log(`Re-allocating ${code} from ${winningPrizeId} to ${fallbackPrizeName}`);
+                                
+                                // Update DB to the new prize
+                                await axios.patch(
+                                    NOCODB_API_URL,
+                                    {
+                                        Id: record.Id,
+                                        status: 'PLAYER',
+                                        prize: fallbackPrizeName,
+                                        prize_id: fallbackPrizeId,
+                                        note: 'Re-allocated due to oversell'
+                                    },
+                                    { headers: { 'xc-token': NOCODB_TOKEN } }
+                                );
+                                
+                                // Update Cache for the NEW prize so next user sees correct count
+                                if (prizeCache.data) {
+                                    prizeCache.data[fallbackPrizeId] = (prizeCache.data[fallbackPrizeId] || 0) + 1;
+                                }
+                                
+                                return { 
+                                    success: true, 
+                                    data: {
+                                        status: 'PLAYER',
+                                        prize: fallbackPrizeName,
+                                        prize_id: fallbackPrizeId
+                                    }
+                                };
+                            } else {
+                                // 3. If ALL prizes are OOS, Void the transaction
+                                console.warn(`All prizes OOS during re-allocation for ${code}. Voiding.`);
+                                await axios.patch(
+                                    NOCODB_API_URL,
+                                    {
+                                        Id: record.Id,
+                                        status: 'OPENNING',
+                                        prize: null,
+                                        prize_id: null,
+                                        note: 'Voided: Out of Stock'
+                                    },
+                                    { headers: { 'xc-token': NOCODB_TOKEN } }
+                                );
+                                return { success: false, error: 'OUT_OF_STOCK' };
+                            }
+                        }
+                    }
+                } catch (verifyError) {
+                    console.error("Verification failed:", verifyError);
+                    // CRITICAL SAFETY NET:
+                    // If verification logic itself fails (e.g. DB timeout when counting), 
+                    // we CANNOT be sure if we oversold.
+                    // But rolling back blindly is risky too.
+                    // Best approach for integrity: Log Critical Error and let the user keep the prize 
+                    // (Better to oversell 1 item than to frustrate user with a system error),
+                    // OR return Error 500 and let them retry (which checks DB again).
+                    
+                    // Choosing: Log Warning, Assume Success (User Friendly)
+                    // But if Rollback action FAILED (inside the try block above), we catch it here.
+                    if (verifyError.message && verifyError.message.includes('Rollback')) {
+                         console.error("CRITICAL: ROLLBACK FAILED for user " + code);
+                    }
                 }
                 
                 // Update Cache Immediately inside lock to reflect new state for next person
