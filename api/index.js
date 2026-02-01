@@ -64,10 +64,10 @@ app.get('/api/check', async (req, res) => {
 // Adjust limits via Environment Variables on Railway
 // Defaults are set to Production values
 const PRIZE_LIMITS = {
-    'prize-2': parseInt(process.env.PRIZE_LIMIT_2 || '6'),      // Máy tính
-    'prize-3': parseInt(process.env.PRIZE_LIMIT_3 || '1500'),   // 5k Fpoint
-    'prize-4': parseInt(process.env.PRIZE_LIMIT_4 || '20'),     // 200k Fpoint
-    'prize-5': parseInt(process.env.PRIZE_LIMIT_5 || '500')     // 10k Fpoint
+    'prize-2': parseInt(process.env.PRIZE_LIMIT_2 || '0'),      // Máy tính
+    'prize-3': parseInt(process.env.PRIZE_LIMIT_3 || '0'),   // 5k Fpoint
+    'prize-4': parseInt(process.env.PRIZE_LIMIT_4 || '0'),     // 200k Fpoint
+    'prize-5': parseInt(process.env.PRIZE_LIMIT_5 || '0')     // 10k Fpoint
 };
 
 const PRIZE_NAMES = {
