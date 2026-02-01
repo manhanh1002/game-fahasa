@@ -32,6 +32,13 @@ async function checkGameCondition() {
 
         const data = await response.json();
         if (data.valid) {
+            // Check Global Out Of Stock first
+            if (data.isGlobalOutOfStock && data.status !== 'PLAYER') {
+                isOutOfStock = true;
+                showOpeningPopup(); // Show "Out of Stock" / "Hết lượt" popup
+                return false;
+            }
+
             if (data.status === 'INVITED') {
                 // Show Start Button (was hidden by default)
                 const btnStart = document.querySelector('.btn-primary');
