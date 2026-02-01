@@ -67,7 +67,7 @@ const PRIZE_LIMITS = {
     'prize-2': parseInt(process.env.PRIZE_LIMIT_2 || '1'),      // Máy tính
     'prize-3': parseInt(process.env.PRIZE_LIMIT_3 || '2'),  // 5k Fpoint (Hardcoded to 2 as per user request)
     'prize-4': parseInt(process.env.PRIZE_LIMIT_4 || '1'),     // 200k Fpoint
-    'prize-5': parseInt(process.env.PRIZE_LIMIT_5 || '0')     // 10k Fpoint
+    'prize-5': parseInt(process.env.PRIZE_LIMIT_5 || '1')     // 10k Fpoint
 };
 
 const PRIZE_NAMES = {
