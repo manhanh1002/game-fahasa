@@ -342,6 +342,41 @@ app.post('/api/update', async (req, res) => {
                                     },
                                     { headers: { 'xc-token': NOCODB_TOKEN } }
                                 );
+
+                                // DOUBLE VERIFICATION: Check if the NEW prize is also oversold?
+                                // (Race condition could happen exactly during re-allocation)
+                                try {
+                                    const fallbackLimit = PRIZE_LIMITS[fallbackPrizeId];
+                                    if (fallbackLimit > 0) {
+                                        const verifyFallbackRes = await axios.get(NOCODB_API_URL, {
+                                            headers: { 'xc-token': NOCODB_TOKEN },
+                                            params: { 
+                                                where: `(prize_id,eq,${fallbackPrizeId})`, 
+                                                limit: fallbackLimit + 5 
+                                            }
+                                        });
+                                        const fallbackCount = verifyFallbackRes.data.pageInfo?.totalRows ?? 0;
+                                        
+                                        if (fallbackCount > fallbackLimit) {
+                                            console.warn(`Double Oversell detected! ${code} failed re-allocation to ${fallbackPrizeId}. Voiding.`);
+                                            throw new Error('REALLOCATION_OVERSOLD');
+                                        }
+                                    }
+                                } catch (doubleVerifyErr) {
+                                    // If verification fails or shows oversell, we MUST Void to be safe
+                                    await axios.patch(
+                                        NOCODB_API_URL,
+                                        {
+                                            Id: record.Id,
+                                            status: 'OPENNING',
+                                            prize: null,
+                                            prize_id: null,
+                                            note: 'Voided: Double Oversell'
+                                        },
+                                        { headers: { 'xc-token': NOCODB_TOKEN } }
+                                    );
+                                    return { success: false, error: 'OUT_OF_STOCK' };
+                                }
                                 
                                 // Update Cache for the NEW prize so next user sees correct count
                                 if (prizeCache.data) {
