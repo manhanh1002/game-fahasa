@@ -336,7 +336,7 @@ app.post('/api/update', async (req, res) => {
                                 params: { 
                                     where: verifyWhere, 
                                     limit: verifyLimit + 10, // Fetch enough to find ourselves
-                                    sort: 'updated_at,Id' // Sort by Time ASC, then ID ASC (stable sort)
+                                    sort: 'UpdatedAt,Id' // Sort by Time ASC, then ID ASC (stable sort)
                                 },
                                 timeout: 5000
                             });
