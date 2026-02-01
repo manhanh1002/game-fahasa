@@ -98,6 +98,8 @@ function withPrizeLock(task) {
     return result;
 }
 
+const { v4: uuidv4 } = require('uuid');
+
 // Helper: Retry Operation with Exponential Backoff
 async function retryOperation(operation, retries = 3, delay = 500) {
     for (let i = 0; i < retries; i++) {
@@ -270,12 +272,59 @@ app.post('/api/update', async (req, res) => {
                 return res.status(409).json({ error: 'Check blocked', currentStatus: record.status });
             }
 
+            // =========================================================================
+            // DISTRIBUTED OPTIMISTIC LOCK (Using 'note' field)
+            // Prevent 1 user from running logic in multiple tabs/instances concurrently
+            // =========================================================================
+            const lockId = `LOCK-${uuidv4()}`;
+            
+            // 1. Check if already locked by another request (and not expired)
+            if (record.note && record.note.startsWith('LOCK-')) {
+                // Check if lock is stale (optional: assume stale if > 30s)
+                const lastUpdated = new Date(record.UpdatedAt).getTime();
+                if (Date.now() - lastUpdated < 30000) {
+                     console.warn(`User ${code} is LOCKED by another request. Rejecting.`);
+                     return res.status(429).json({ error: 'Request is being processed. Please wait.' });
+                }
+                console.warn(`User ${code} has STALE lock. Taking over.`);
+            }
+
+            // 2. Attempt to Acquire Lock
+            try {
+                await axios.patch(NOCODB_API_URL, { 
+                    Id: record.Id, 
+                    note: lockId 
+                }, { headers: { 'xc-token': NOCODB_TOKEN } });
+                
+                // 3. Wait small delay to allow race condition to resolve (Last Write Wins)
+                await new Promise(resolve => setTimeout(resolve, Math.floor(Math.random() * 200) + 200));
+
+                // 4. Verify Lock Ownership
+                const verifyLockRes = await axios.get(NOCODB_API_URL, {
+                    headers: { 'xc-token': NOCODB_TOKEN },
+                    params: { where: `(Id,eq,${record.Id})`, limit: 1 }
+                });
+                
+                const lockedRecord = verifyLockRes.data.list?.[0];
+                if (!lockedRecord || lockedRecord.note !== lockId) {
+                    // Lost the lock to another concurrent request
+                    console.warn(`User ${code} LOST LOCK (Current: ${lockedRecord?.note}). Aborting.`);
+                    return res.status(429).json({ error: 'Request is being processed. Please wait.' });
+                }
+                
+                // I HAVE THE LOCK. PROCEED.
+            } catch (lockError) {
+                console.error("Locking failed:", lockError.message);
+                return res.status(500).json({ error: 'System Busy' });
+            }
+
             // ANTI-DDOS / CONCURRENCY MITIGATION
             // Add a small random delay (100ms - 500ms) to desynchronize simultaneous requests
             // This reduces the chance of 1000 requests hitting the DB check at the exact same millisecond
-            await new Promise(resolve => setTimeout(resolve, Math.floor(Math.random() * 400) + 100));
+            // await new Promise(resolve => setTimeout(resolve, Math.floor(Math.random() * 400) + 100)); // Already delayed in Lock
 
             // 3. LOTTERY LOGIC (Server Side) - WRAPPED IN GLOBAL MUTEX
+
             // Critical Section: Read Count -> Check Limit -> Update DB
             // Only ONE request can execute this block at a time.
             const allocationResult = await withPrizeLock(async () => {
