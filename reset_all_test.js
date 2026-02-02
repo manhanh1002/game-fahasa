@@ -25,7 +25,7 @@ async function reset() {
                 prize: null,
                 prize_id: null,
                 note: null,
-                order_status: 'TEST_LOCK_VALUE'
+                order_status: null
             }, {
                 headers: { 'xc-token': NOCODB_TOKEN }
             });
