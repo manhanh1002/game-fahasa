@@ -57,7 +57,6 @@ app.get('/api/check', async (req, res) => {
                 prize_id: null
             });
         }
-
         res.json({
             valid: true,
             status: record.status,

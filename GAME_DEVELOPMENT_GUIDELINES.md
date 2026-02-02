@@ -111,6 +111,7 @@ Thiết kế Database quyết định 50% độ ổn định của game.
 9.  **Response:** Trả kết quả cho Client.
 
 ### 5.3. Xử lý lỗi (Recovery)
+-   **Zombie State Prevention:** Nếu giao dịch thất bại (ví dụ: Hết quà sau khi đã qua bước check đầu, hoặc lỗi Verify), hệ thống **BẮT BUỘC** phải revert trạng thái người dùng về trạng thái ban đầu (ví dụ: `INVITED`) để họ có thể thử lại. Tuyệt đối không để user ở trạng thái lửng lơ (ví dụ: `PLAYER` nhưng `prize: null`).
 -   Nếu lỗi xảy ra giữa chừng (sau khi Lock, trước khi Commit): Phải đảm bảo Release Lock (dùng `finally` block).
 -   Nếu Timeout DB: Trả về lỗi "Hệ thống bận", không trả về kết quả thắng/thua mơ hồ.
 
