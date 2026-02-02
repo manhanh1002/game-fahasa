@@ -15,6 +15,11 @@ function getQueryParam(param) {
     return value ? value.trim() : null;
 }
 
+function hideLoading() {
+    const spinner = document.getElementById('loading-spinner');
+    if (spinner) spinner.style.display = 'none';
+}
+
 // Function to check game condition via Backend API
 async function checkGameCondition() {
     const code = getQueryParam('random_code');
@@ -23,6 +28,7 @@ async function checkGameCondition() {
         // Show Access Error Popup
         const popup = document.getElementById('popup-access-error');
         if (popup) popup.style.display = 'flex';
+        hideLoading();
         return false;
     }
 
@@ -99,6 +105,8 @@ async function checkGameCondition() {
         console.error("Lỗi kết nối đến server:", error);
         // alert("Có lỗi xảy ra khi kiểm tra điều kiện chơi. Vui lòng thử lại sau.");
         return false;
+    } finally {
+        hideLoading();
     }
 }
 
@@ -491,7 +499,7 @@ async function updateGameStatus(prizeName, prizeId, statusParam) {
 }
 
 // Game Logic
-function selectEnvelope(id) {
+async function selectEnvelope(id) {
     if (isProcessing) return;
     console.log("Selected Envelope ID: " + id);
 
@@ -502,12 +510,17 @@ function selectEnvelope(id) {
     if (targetEnvelope) {
         isProcessing = true; // Block other interactions
 
-        // Show result
-        showResult(id);
+        // Add shaking effect
+        const img = targetEnvelope.querySelector('.envelope-img');
+        if (img) img.classList.add('shaking');
 
-        setTimeout(() => {
-            isProcessing = false;
-        }, 300);
+        // Show result
+        await showResult(id);
+
+        // Remove shaking effect
+        if (img) img.classList.remove('shaking');
+
+        isProcessing = false;
     } else {
         showResult(id);
     }

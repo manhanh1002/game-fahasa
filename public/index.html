@@ -58,7 +58,8 @@
 
             <!-- Primary Action Button -->
             <!-- Initially hidden to prevent flicker, revealed by JS after status check -->
-            <button class="btn btn-primary btn-img-mode" onclick="startProgram()" style="display: none;">
+            <div id="loading-spinner" class="loading-spinner"></div>
+            <button class="btn btn-primary btn-img-mode" onclick="startProgram()" style="display: none !important;">
                 <img src="assets/btn-start.png" alt="Bắt Đầu Ngay">
             </button>
 

