@@ -18,10 +18,10 @@ async function reset() {
 
         if (findRes.data.list.length > 0) {
             const id = findRes.data.list[0].Id;
-            // 2. Update to OPENNING
+            // 2. Update to INVITED
             await axios.patch(NOCODB_API_URL, {
                 Id: id,
-                status: 'OPENNING',
+                status: 'INVITED',
                 prize: null,
                 prize_id: null,
                 note: null,

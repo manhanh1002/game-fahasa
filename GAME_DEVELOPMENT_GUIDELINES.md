@@ -111,9 +111,23 @@ Thiết kế Database quyết định 50% độ ổn định của game.
 9.  **Response:** Trả kết quả cho Client.
 
 ### 5.3. Xử lý lỗi (Recovery)
--   **Zombie State Prevention:** Nếu giao dịch thất bại (ví dụ: Hết quà sau khi đã qua bước check đầu, hoặc lỗi Verify), hệ thống **BẮT BUỘC** phải revert trạng thái người dùng về trạng thái ban đầu (ví dụ: `INVITED`) để họ có thể thử lại. Tuyệt đối không để user ở trạng thái lửng lơ (ví dụ: `PLAYER` nhưng `prize: null`).
 -   Nếu lỗi xảy ra giữa chừng (sau khi Lock, trước khi Commit): Phải đảm bảo Release Lock (dùng `finally` block).
 -   Nếu Timeout DB: Trả về lỗi "Hệ thống bận", không trả về kết quả thắng/thua mơ hồ.
+
+---
+
+## 6. Business Rules & Compliance (Quy định nghiệp vụ)
+
+### 6.1. Thời gian hiệu lực của lượt chơi (10-Minute Rule)
+Để tránh việc người chơi "treo" máy hoặc chiếm dụng tài nguyên game mà không thực hiện hành động, hệ thống áp dụng quy tắc 10 phút:
+-   **Kích hoạt:** Thời gian bắt đầu đếm ngược ngay khi người chơi truy cập vào link (Hệ thống ghi nhận lần đầu qua API `/check`).
+-   **Trạng thái:** Status chuyển từ `INVITED` sang `OPENNING` để đánh dấu bắt đầu timer.
+-   **Hết hạn:** Nếu sau 10 phút kể từ lúc truy cập mà người chơi vẫn ở trạng thái `INVITED` hoặc `OPENNING` (chưa bấm nhận quà để sang `PLAYER`), lượt chơi đó sẽ bị coi là **Hết hạn (EXPIRED)**.
+-   **Xử lý:** Người chơi sẽ không thể chơi tiếp, hệ thống hiện thông báo "Hết hạn tham gia" và ghi nhận trạng thái `EXPIRED` vào Database để chặn các truy cập sau này.
+
+### 6.2. Xử lý trạng thái lỗi (Zombie State Prevention)
+-   **Nguyên tắc:** Nếu một request trúng quà nhưng bị lỗi trong quá trình update Database (dẫn đến trạng thái `PLAYER` nhưng không có thông tin `prize`), hệ thống phải **tự động hoàn tác (Revert)** về trạng thái `INVITED`.
+-   **Lợi ích:** Đảm bảo người chơi không bị mất lượt oan do lỗi kỹ thuật và có thể thử lại.
 
 ---
 
