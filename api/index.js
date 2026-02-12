@@ -287,9 +287,9 @@ app.post('/api/update', async (req, res) => {
             }
 
             // ANTI-DDOS / CONCURRENCY MITIGATION
-            // Add a small random delay (100ms - 500ms) to desynchronize simultaneous requests
+            // Add a small random delay (50ms - 200ms) to desynchronize simultaneous requests
             // This reduces the chance of 1000 requests hitting the DB check at the exact same millisecond
-            await new Promise(resolve => setTimeout(resolve, Math.floor(Math.random() * 400) + 100));
+            await new Promise(resolve => setTimeout(resolve, Math.floor(Math.random() * 150) + 50));
 
             // DISTRIBUTED LOCK (via NocoDB 'lock_status' field)
             // This prevents the same code from being processed by multiple server instances
@@ -319,10 +319,10 @@ app.post('/api/update', async (req, res) => {
                 let lockAcquired = false;
                 let lastStatus = null;
                 // Wait a bit before first check to allow initial propagation
-                await new Promise(resolve => setTimeout(resolve, 800));
+                await new Promise(resolve => setTimeout(resolve, 300)); // Reduced from 800ms
 
-                for (let i = 0; i < 20; i++) { // Retry 20 times (approx 10s)
-                    await new Promise(resolve => setTimeout(resolve, 500)); // Wait 500ms
+                for (let i = 0; i < 30; i++) { // Retry 30 times (approx 6s total)
+                    await new Promise(resolve => setTimeout(resolve, 200)); // Wait 200ms (Reduced from 500ms)
                     
                     const verifyLockRes = await axios.get(NOCODB_API_URL, {
                         headers: { 'xc-token': NOCODB_TOKEN },
@@ -404,7 +404,7 @@ app.post('/api/update', async (req, res) => {
                 try {
                     // CRITICAL: Add Random Delay to allow DB Propagation in Distributed Environment
                     // This ensures that concurrent writes from other instances have time to be indexed/visible
-                    await new Promise(resolve => setTimeout(resolve, Math.floor(Math.random() * 1000) + 500));
+                    await new Promise(resolve => setTimeout(resolve, Math.floor(Math.random() * 300) + 200));
 
                     const verifyLimit = PRIZE_LIMITS[winningPrizeId];
                     // Only check if limit is small/critical
