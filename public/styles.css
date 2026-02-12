@@ -309,7 +309,6 @@ body {
 .popup-rules-custom {
     max-width: 450px !important;
     width: 95% !important;
-    z-index: 200 !important; /* Ensure rules are always on top when opened */
 }
 
 .rules-bg-wrapper {
@@ -362,10 +361,8 @@ body {
     width: 100%;
     height: 100%;
     background: rgba(0, 0, 0, 0.7);
-    z-index: 100;
     display: flex;
     justify-content: center;
-    align-items: center;
     align-items: center;
     /* Zoom in animation */
     animation: zoomIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
