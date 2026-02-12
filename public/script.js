@@ -373,6 +373,23 @@ async function startProgram() {
                  return;
             }
 
+            // Handle EXPIRED or Start Blocked
+            if (result && (result.currentStatus === 'EXPIRED' || result.error === 'Start blocked')) {
+                // Show Expired Popup
+                const expiredPopup = document.getElementById('popup-expired');
+                if (expiredPopup) {
+                    toggleHomeContent(false);
+                    expiredPopup.style.display = 'flex';
+                }
+                
+                if (btnStart) {
+                    btnStart.style.opacity = '1';
+                    btnStart.style.pointerEvents = 'auto';
+                }
+                isProcessing = false;
+                return;
+            }
+
             // If it failed, maybe code is invalid or network error
              if (btnStart) {
                 btnStart.style.opacity = '1';
