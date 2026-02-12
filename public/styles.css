@@ -309,6 +309,7 @@ body {
 .popup-rules-custom {
     max-width: 450px !important;
     width: 95% !important;
+    z-index: 200 !important; /* Ensure rules are always on top when opened */
 }
 
 .rules-bg-wrapper {

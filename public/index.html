@@ -127,7 +127,7 @@
 
     <!-- Gift Popup -->
     <div id="popup-gift" class="popup-overlay" style="display:none;">
-        <div class="popup-container">
+        <div class="popup-container" onclick="event.stopPropagation()">
             <img src="assets/popup-gift.png" alt="Quà Tặng" class="popup-note-img">
             <button class="btn-popup-close" onclick="closePopup()">
                 <img src="assets/btn-understood.png" alt="Đã hiểu">
@@ -136,8 +136,8 @@
     </div>
 
     <!-- Rules Popup -->
-    <div id="popup-rules" class="popup-overlay" style="display:none;">
-        <div class="popup-container popup-rules-custom">
+    <div id="popup-rules" class="popup-overlay" style="display:none; z-index: 1000;">
+        <div class="popup-container popup-rules-custom" onclick="event.stopPropagation()">
             <div class="rules-bg-wrapper">
                 <img src="assets/popup-rules-bg.png" alt="Background" class="rules-bg-img">
                 <div class="rules-scroll-area">
@@ -165,30 +165,30 @@
     </div>
 
     <!-- Expired Popup -->
-    <div id="popup-expired" class="popup-overlay" style="display:none;">
-        <div class="popup-container">
+    <div id="popup-expired" class="popup-overlay" style="display:none; z-index: 900;">
+        <div class="popup-container" onclick="event.stopPropagation()">
             <img src="assets/popup-expired.png" alt="Rất tiếc" class="popup-note-img">
             <div class="popup-actions" style="margin-top: 15px;">
                 <img src="assets/btn-view-rules.png" alt="Xem Thể Lệ" class="btn-popup-action"
-                    onclick="closeSpecificPopup('popup-expired'); showRules()">
+                    onclick="showRules()">
                 <img src="assets/btn-home.png" alt="Màn hình chính" class="btn-popup-action"
-                    onclick="closeSpecificPopup('popup-expired'); goHome()">
+                    onclick="goHome()">
             </div>
         </div>
     </div>
 
     <!-- Access Error Popup -->
-    <div id="popup-access-error" class="popup-overlay" style="display:none;">
-        <div class="popup-container">
+    <div id="popup-access-error" class="popup-overlay" style="display:none; z-index: 950;">
+        <div class="popup-container" onclick="event.stopPropagation()">
             <img src="assets/popup-access-error.png" alt="Lỗi Truy Cập" class="popup-note-img">
-            <button class="btn-popup-close" onclick="closeSpecificPopup('popup-access-error'); goHome()">
+            <button class="btn-popup-close" onclick="goHome()">
                 <img src="assets/btn-understood.png" alt="Đã hiểu">
             </button>
         </div>
     </div>
 
     <!-- Opening Status Popup (New) -->
-    <div id="popup-opening" class="popup-overlay" style="display:none;" onclick="closeSpecificPopup('popup-opening')">
+    <div id="popup-opening" class="popup-overlay" style="display:none; z-index: 800;" onclick="closeSpecificPopup('popup-opening')">
         <div class="popup-container" onclick="event.stopPropagation()">
             <img src="assets/popup-opening.png" alt="Hết lượt" class="popup-note-img">
             <div class="popup-actions" style="margin-top: 15px;">
@@ -205,7 +205,7 @@
 
     <!-- Result Popup (Moved Global) -->
     <div id="result-popup" class="popup-overlay" style="display: none;">
-        <div class="popup-container animate-popup">
+        <div class="popup-container animate-popup" onclick="event.stopPropagation()">
             <img src="assets/popup-gift.png" alt="Phần quà" class="popup-note-img" id="result-image">
             <div id="result-note" class="result-note"></div>
             <div class="popup-actions">

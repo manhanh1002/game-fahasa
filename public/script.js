@@ -708,7 +708,10 @@ function updateUIForReviewMode() {
 
 function goHome() {
     stopStatusPolling();
-    closeResultPopup();
+    // Force hide all popups including critical ones when going home
+    const popups = document.querySelectorAll('.popup-overlay');
+    popups.forEach(p => p.style.display = 'none');
+    
     const homePage = document.getElementById('home-page');
     const gamePage = document.getElementById('game-page');
 
@@ -725,14 +728,21 @@ function goHome() {
 function closePopup() {
     const popups = document.querySelectorAll('.popup-overlay');
     popups.forEach(popup => {
-        // Don't close result-popup if we are just closing a child popup? 
-        // Actually, let's just make a specific function for the new need.
-        // Existing behavior for others is fine.
+        // DO NOT close critical error popups via global close
+        if (popup.id === 'popup-expired' || popup.id === 'popup-access-error') {
+            return;
+        }
         popup.style.display = 'none';
     });
 }
 
 function closeSpecificPopup(id) {
+    // Prevent closing critical error popups unless it's a redirect action (handled in HTML/JS specifically)
+    // Actually, we can allow it if called explicitly, but let's be safe.
+    if (id === 'popup-expired' || id === 'popup-access-error') {
+        console.warn(`Attempted to close critical popup: ${id}. Action blocked.`);
+        return;
+    }
     const popup = document.getElementById(id);
     if (popup) {
         popup.style.display = 'none';
