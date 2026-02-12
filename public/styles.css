@@ -393,12 +393,12 @@ body {
 /* Specific fix for Game Page Background */
 #game-page {
     /* "Giãn tự động" - Stretch to fill */
-    background-size: cover !important;
+    background-size: 100% 100% !important;
     background-position: center !important;
     background-repeat: no-repeat !important;
     aspect-ratio: 9/16;
     /* Ensure it hits the edges or centers? */
-    width: 100vw;
+    width: 100%;
     height: auto;
     /* Let aspect ratio define height, or max-height 100dvh? */
     min-height: 100dvh;
