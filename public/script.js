@@ -212,6 +212,32 @@ let currentUserPrize = null; // Store prize if player has already played
 let pendingPlayerPrize = null; // Store prize temporarily for PLAYER status flow
 let isOutOfStock = false; // Flag for Out of Stock state
 let isInvalidCode = false; // Flag for Invalid Code state
+let statusPollingInterval = null;
+
+function startStatusPolling() {
+    if (statusPollingInterval) return;
+    console.log("Starting status polling (30s interval)...");
+    statusPollingInterval = setInterval(async () => {
+        // Only poll if we are on the game page and not currently processing a click
+        const gamePage = document.getElementById('game-page');
+        if (gamePage && gamePage.style.display !== 'none' && !isProcessing) {
+            console.log("Polling status...");
+            const status = await checkGameCondition();
+            if (status === false) {
+                // checkGameCondition already shows the expired popup if status is EXPIRED
+                stopStatusPolling();
+            }
+        }
+    }, 30000); // 30 seconds
+}
+
+function stopStatusPolling() {
+    if (statusPollingInterval) {
+        console.log("Stopping status polling.");
+        clearInterval(statusPollingInterval);
+        statusPollingInterval = null;
+    }
+}
 
 function showReviewPopup(prizeId) {
     const prizeData = getPrizeConfig(prizeId);
@@ -360,6 +386,9 @@ async function startProgram() {
         // Hide Home, Show Game
         document.getElementById('home-page').style.display = 'none';
         document.getElementById('game-page').style.display = 'block';
+
+        // Start polling for status changes (e.g., EXPIRED) while on game page
+        startStatusPolling();
 
         // Trigger confetti
         confetti({
@@ -539,6 +568,9 @@ async function showResult(envelopeId) {
     // CALL SERVER TO GET PRIZE (Lottery Happens Here)
     const result = await updateGameStatus(null, null, 'PLAYER');
 
+    // Stop polling as the game has finished or status has changed to PLAYER
+    stopStatusPolling();
+
     if (result === 'OUT_OF_STOCK') {
         isOutOfStock = true;
 
@@ -675,6 +707,7 @@ function updateUIForReviewMode() {
 }
 
 function goHome() {
+    stopStatusPolling();
     closeResultPopup();
     const homePage = document.getElementById('home-page');
     const gamePage = document.getElementById('game-page');
