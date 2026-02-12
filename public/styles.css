@@ -401,7 +401,7 @@ body {
     width: 100%;
     height: auto;
     /* Let aspect ratio define height, or max-height 100dvh? */
-    min-height: 100dvh;
+    min-height: 103dvh;
     /* Or force full height */
 }
 
