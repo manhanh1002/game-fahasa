@@ -136,7 +136,7 @@
     </div>
 
     <!-- Rules Popup -->
-    <div id="popup-rules" class="popup-overlay" style="display:none; z-index: 1000;">
+    <div id="popup-rules" class="popup-overlay" style="display:none; z-index: 2000;">
         <div class="popup-container popup-rules-custom" onclick="event.stopPropagation()">
             <div class="rules-bg-wrapper">
                 <img src="assets/popup-rules-bg.png" alt="Background" class="rules-bg-img">
@@ -151,7 +151,7 @@
     </div>
 
     <!-- Contact Popup (New) -->
-    <div id="popup-contact" class="popup-overlay" style="display:none;" onclick="closeSpecificPopup('popup-contact')">
+    <div id="popup-contact" class="popup-overlay" style="display:none; z-index: 1500;" onclick="closeSpecificPopup('popup-contact')">
         <div class="popup-container" onclick="event.stopPropagation()">
             <img src="assets/popup-contact.png" alt="Thông tin liên hệ" class="popup-note-img">
 
@@ -165,7 +165,7 @@
     </div>
 
     <!-- Expired Popup -->
-    <div id="popup-expired" class="popup-overlay" style="display:none; z-index: 900;">
+    <div id="popup-expired" class="popup-overlay" style="display:none; z-index: 1100;">
         <div class="popup-container" onclick="event.stopPropagation()">
             <img src="assets/popup-expired.png" alt="Rất tiếc" class="popup-note-img">
             <div class="popup-actions" style="margin-top: 15px;">
@@ -178,7 +178,7 @@
     </div>
 
     <!-- Access Error Popup -->
-    <div id="popup-access-error" class="popup-overlay" style="display:none; z-index: 950;">
+    <div id="popup-access-error" class="popup-overlay" style="display:none; z-index: 1200;">
         <div class="popup-container" onclick="event.stopPropagation()">
             <img src="assets/popup-access-error.png" alt="Lỗi Truy Cập" class="popup-note-img">
             <button class="btn-popup-close" onclick="goHome()">
@@ -188,7 +188,7 @@
     </div>
 
     <!-- Opening Status Popup (New) -->
-    <div id="popup-opening" class="popup-overlay" style="display:none; z-index: 800;" onclick="closeSpecificPopup('popup-opening')">
+    <div id="popup-opening" class="popup-overlay" style="display:none; z-index: 1000;" onclick="closeSpecificPopup('popup-opening')">
         <div class="popup-container" onclick="event.stopPropagation()">
             <img src="assets/popup-opening.png" alt="Hết lượt" class="popup-note-img">
             <div class="popup-actions" style="margin-top: 15px;">
@@ -204,7 +204,7 @@
     </div>
 
     <!-- Result Popup (Moved Global) -->
-    <div id="result-popup" class="popup-overlay" style="display: none;">
+    <div id="result-popup" class="popup-overlay" style="display: none; z-index: 1300;">
         <div class="popup-container animate-popup" onclick="event.stopPropagation()">
             <img src="assets/popup-gift.png" alt="Phần quà" class="popup-note-img" id="result-image">
             <div id="result-note" class="result-note"></div>
