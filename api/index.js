@@ -47,7 +47,6 @@ app.get('/api/check', async (req, res) => {
         const record = response.data.list?.[0];
         if (!record) return res.json({ valid: false });
 
-        
         // CORRECTION: If status is 'PLAYER' but prize is null (Zombie State),
         // it implies a failed transaction. Reset view to 'INVITED' per user request.
         if (record.status === 'PLAYER' && !record.prize) {
@@ -266,19 +265,6 @@ app.post('/api/update', async (req, res) => {
         }
 
         if (targetStatus === 'PLAYER') {
-            // 10-MINUTE TIMEOUT CHECK
-            if (record.status === 'OPENNING') {
-                const lastUpdated = new Date(record.UpdatedAt).getTime();
-                const now = Date.now();
-                if (now - lastUpdated > 10 * 60 * 1000) {
-                    console.warn(`User ${code} attempted to play after EXPIRED (10min timeout).`);
-                    try {
-                        await axios.patch(NOCODB_API_URL, { Id: record.Id, status: 'EXPIRED' }, { headers: { 'xc-token': NOCODB_TOKEN } });
-                    } catch (e) {}
-                    return res.status(403).json({ error: 'Session expired (10 minutes limit)', status: 'EXPIRED' });
-                }
-            }
-
             // CORRECTION: If previously failed (PLAYER + null), treat as INVITED
             if (record.status === 'PLAYER' && !record.prize) {
                 // Allow to proceed as if INVITED
