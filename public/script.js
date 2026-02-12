@@ -15,6 +15,17 @@ function getQueryParam(param) {
     return value ? value.trim() : null;
 }
 
+function toggleHomeContent(show) {
+    const homePage = document.getElementById('home-page');
+    if (homePage) {
+        if (show) {
+            homePage.classList.remove('home-hidden');
+        } else {
+            homePage.classList.add('home-hidden');
+        }
+    }
+}
+
 function hideLoading() {
     const spinner = document.getElementById('loading-spinner');
     if (spinner) spinner.style.display = 'none';
@@ -266,6 +277,7 @@ function showReviewPopup(prizeId) {
             btnContact.style.display = 'flex';
         }
 
+        toggleHomeContent(false);
         popup.style.display = 'flex';
     }
 }
@@ -412,6 +424,7 @@ async function startProgram() {
 function showGifts() {
     if (isProcessing) return;
     console.log("User clicked Gifts");
+    toggleHomeContent(false);
     const popup = document.getElementById('popup-gift');
     if (popup) {
         popup.style.display = 'flex';
@@ -421,6 +434,7 @@ function showGifts() {
 function showRules() {
     if (isProcessing) return;
     console.log("User clicked Rules");
+    toggleHomeContent(false);
     const popup = document.getElementById('popup-rules');
     if (popup) {
         popup.style.display = 'flex';
@@ -443,6 +457,7 @@ window.addEventListener('DOMContentLoaded', () => {
     checkGameCondition().then(status => {
         // If status is true (INVITED), show welcome popup IMMEDIATELY
         if (status === true) {
+            toggleHomeContent(false);
             const popup = document.getElementById('welcome-popup');
             if (popup) popup.style.display = 'flex';
         } else if (status === 'OPENNING') {
@@ -462,6 +477,7 @@ const prizes = {
 
 
 function showContactInfo() {
+    toggleHomeContent(false);
     const popup = document.getElementById('popup-contact');
     if (popup) {
         popup.style.display = 'flex';
@@ -590,6 +606,7 @@ async function showResult(envelopeId) {
             if (btnFpoint) btnFpoint.style.display = 'none';
             if (btnContact) btnContact.style.display = 'none';
 
+            toggleHomeContent(false);
             popup.style.display = 'flex';
         } else {
             alert("Rất tiếc, các phần quà đã hết");
@@ -644,6 +661,7 @@ async function showResult(envelopeId) {
                     btnContact.style.display = 'flex';
                 }
 
+                toggleHomeContent(false);
                 popup.style.display = 'flex';
 
                 // Trigger Fireworks ONLY IF NOT EXISTING
@@ -686,6 +704,7 @@ function triggerFireworks() {
 }
 
 function closeResultPopup() {
+    toggleHomeContent(true);
     const popup = document.getElementById('result-popup');
     if (popup) {
         popup.style.display = 'none';
@@ -712,6 +731,8 @@ function goHome() {
     const popups = document.querySelectorAll('.popup-overlay');
     popups.forEach(p => p.style.display = 'none');
     
+    toggleHomeContent(true);
+
     const homePage = document.getElementById('home-page');
     const gamePage = document.getElementById('game-page');
 
@@ -726,6 +747,7 @@ function goHome() {
     }
 }
 function closePopup() {
+    toggleHomeContent(true);
     const popups = document.querySelectorAll('.popup-overlay');
     popups.forEach(popup => {
         // DO NOT close critical error popups via global close
@@ -743,6 +765,7 @@ function closeSpecificPopup(id) {
         console.warn(`Attempted to close critical popup: ${id}. Action blocked.`);
         return;
     }
+    toggleHomeContent(true);
     const popup = document.getElementById(id);
     if (popup) {
         popup.style.display = 'none';
@@ -750,6 +773,7 @@ function closeSpecificPopup(id) {
 }
 
 function showOpeningPopup() {
+    toggleHomeContent(false);
     const popup = document.getElementById('popup-opening');
     if (popup) {
         popup.style.display = 'flex';

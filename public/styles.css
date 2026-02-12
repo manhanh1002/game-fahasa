@@ -575,3 +575,10 @@ body {
     animation: shake 0.5s;
     animation-iteration-count: infinite;
 }
+
+/* Hide home content when popup is active */
+.home-hidden .main-header,
+.home-hidden .game-area,
+.home-hidden .footer-decoration {
+    visibility: hidden !important;
+}
