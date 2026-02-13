@@ -29,7 +29,7 @@ body {
 }
 
 .app-container {
-    max-width: 29.5rem;
+    max-width: 472px;
     /* Mobile width mimic */
     width: 100%;
     margin: 0 auto;
@@ -40,7 +40,7 @@ body {
     position: relative;
     padding: 10px;
     background-image: url('assets/bg-main.png');
-    background-size: 480px 100%;
+    background-size: 472px 100%;
     /* Stretch to fill as it's a specific design */
     background-position: top center;
     background-repeat: no-repeat;
@@ -393,7 +393,7 @@ body {
 /* Specific fix for Game Page Background */
 #game-page {
     /* "Giãn tự động" - Stretch to fill */
-    background-size: 29.5rem 100% !important;
+    background-size: 472px 100% !important;
     background-position: center !important;
     background-repeat: no-repeat !important;
     background-color: #b30000; /* Màu đỏ nền của game */
