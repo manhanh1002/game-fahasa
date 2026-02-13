@@ -29,7 +29,7 @@ body {
 }
 
 .app-container {
-    max-width: 480px;
+    max-width: 472px;
     /* Mobile width mimic */
     width: 100%;
     margin: 0 auto;
