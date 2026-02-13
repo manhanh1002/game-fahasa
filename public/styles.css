@@ -40,7 +40,7 @@ body {
     position: relative;
     padding: 10px;
     background-image: url('assets/bg-main.png');
-    background-size: 100% 100%;
+    background-size: 480px 100%;
     /* Stretch to fill as it's a specific design */
     background-position: top center;
     background-repeat: no-repeat;
