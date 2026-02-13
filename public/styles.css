@@ -393,13 +393,13 @@ body {
 /* Specific fix for Game Page Background */
 #game-page {
     /* "Giãn tự động" - Stretch to fill */
-    background-size: 472px 100% !important;
+    background-size: contain;
     background-position: center !important;
     background-repeat: no-repeat !important;
     background-color: #b30000; /* Màu đỏ nền của game */
     aspect-ratio: 9/16;
     /* Ensure it hits the edges or centers? */
-    width: 100%;
+
     height: auto;
     /* Let aspect ratio define height, or max-height 100dvh? */
     min-height: 100dvh;
